@@ -1,9 +1,13 @@
-const express = require("express");
-const path = require("path");
-const postsRouter = require("./routes/posts");
+import express from "express";
+import path from "path";
+import postsRouter from "./routes/posts.js";
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+
+//Body parser Middlware for POST request
+app.use(express.json());
+// app.use(express.urlencoded({ extended: false }));
 
 //set up static folder
 // app.use(express.static(path.join(__dirname, "public")));
