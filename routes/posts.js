@@ -7,8 +7,16 @@ let posts = [
   { id: 3, title: "Post Three" },
 ];
 
+//Middleware
+const logger = (req, res, next) => {
+  console.log(
+    `${req.method} ${req.protocol}://${req.get("host")}-${req.originalUrl}`
+  );
+  next();
+};
+
 //Get all posts
-postsRouter.get("/", (req, res) => {
+postsRouter.get("/", logger, (req, res) => {
   const limit = parseInt(req.query.limit);
   if (!isNaN(limit) && limit > 0) {
     res.json(posts.slice(0, limit));
@@ -18,25 +26,29 @@ postsRouter.get("/", (req, res) => {
 });
 
 //Get a single post
-postsRouter.get("/:id", (req, res) => {
+postsRouter.get("/:id", (req, res, next) => {
   const id = parseInt(req.params.id);
   const post = posts.find((post) => post.id === id);
   if (!post) {
-    return res.status(404).send({ message: "Post Not Found" });
+    const error = new Error(`Post ${id} not Found`);
+    error.status = 404;
+    return next(error);
   }
 
-  res.json(post);
+  res.status(200).json(post);
 });
 
 //Create new post
-postsRouter.post("/", async (req, res) => {
+postsRouter.post("/", async (req, res, next) => {
   const newPost = {
     id: posts.length + 1,
     title: await req.body.title,
   };
 
   if (!newPost.title) {
-    return res.status(400).json({ message: "Please include a title" });
+    const error = new Error("Please include a title");
+    error.status = 400;
+    return next(error);
   }
 
   posts.push(newPost);
@@ -44,11 +56,13 @@ postsRouter.post("/", async (req, res) => {
 });
 
 //Update Post
-postsRouter.put("/:id", (req, res) => {
+postsRouter.put("/:id", (req, res, next) => {
   const id = parseInt(req.params.id);
   const post = posts.find((post) => post.id === id);
   if (!post) {
-    return res.status(404).json({ message: `Post with id ${id} Not Found` });
+    const error = new Error(`Post ${id} not Found`);
+    error.status = 404;
+    return next(error);
   }
 
   post.title = req.body.title;
